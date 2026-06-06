@@ -1,0 +1,32 @@
+name: Release zip
+
+# Auto-build a publishable .zip whenever a tag like v1.2.3 is pushed.
+# The .zip is uploaded to the GitHub release by the standard `actions/upload-release-asset`
+# pattern, but we just attach it as a workflow artifact here — you can then
+# download it from the Actions tab and attach it to a manually-created release,
+# or use a third-party action like softprops/action-gh-release if you want
+# fully automatic releases.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bundle zip (STORE mode, preserves directory structure)
+        run: |
+          # We don't use `zip -r` because the framework already has node-based tooling.
+          # Use the same pack.js from the repo.
+          node pack.js . novel-tts-reader-${{ github.ref_name }}.zip
+
+      - name: Upload zip as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: novel-tts-reader-${{ github.ref_name }}
+          path: novel-tts-reader-${{ github.ref_name }}.zip
+          if-no-files-found: error
