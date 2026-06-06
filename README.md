@@ -3,6 +3,12 @@
 > A Chrome extension that turns any novel-style website into TTS-audio you can listen to.
 > Built around a **pluggable adapter architecture**: support for a new site is a single file.
 
+[![MIT License](https://img.shields.io/github/license/63894696/novel-tts-reader)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/63894696/novel-tts-reader)](https://github.com/63894696/novel-tts-reader/releases/latest)
+[![Release zip](https://github.com/63894696/novel-tts-reader/actions/workflows/release.yml/badge.svg)](https://github.com/63894696/novel-tts-reader/actions/workflows/release.yml)
+[![Chrome MV3](https://img.shields.io/badge/Chrome-MV3-4285F4?logo=googlechrome&logoColor=white)](#)
+[![Node 24](https://img.shields.io/badge/Node-24-339933?logo=node.js&logoColor=white)](.github/workflows/release.yml)
+
 ## ⚠️ Legal / responsible use
 
 This repository contains a **generic content-extraction framework**. It does
@@ -22,6 +28,30 @@ site-specific adapter (or use a separate, privately-shared build).
 The maintainers do not endorse or support use of this tool to download,
 re-host, or redistribute copyrighted material without permission. Please
 respect authors and support legitimate works.
+
+## Table of contents
+
+- [What this is](#what-this-is)
+- [Screenshots](#screenshots)
+- [Quick start](#quick-start-for-end-users-of-your-build)
+- [Architecture](#architecture)
+- [Permissions](#permissions)
+- [Writing your first adapter](#writing-your-first-adapter)
+- [Building a release zip](#building-a-release-zip)
+- [License](#license)
+
+## Screenshots
+
+> The framework is site-agnostic — what you see depends on which adapter
+> you ship with your build. Below is a representative example from the
+> sudugu.org adapter (shipped in a separate, private build, not in this repo).
+>
+> See [`docs/screenshots/`](docs/screenshots/) for the full set and instructions
+> on how to contribute your own.
+
+| Floating 📖 button on a chapter page | Per-chapter panel | Popup TTS listener |
+| :---: | :---: | :---: |
+| _Add `docs/screenshots/floating-button.png`_ | _Add `docs/screenshots/per-chapter-panel.png`_ | _Add `docs/screenshots/popup-tts.png`_ |
 
 ## What this is
 
@@ -104,6 +134,30 @@ The TL;DR is: copy `extractors/adapter-template.js` to
 `extractors/adapter-mysite.js`, fill in 4 things — `match`, `extract`,
 `listChapters`, and optionally `bookIndexPages` — then add a line in
 `manifest.json`. That's it.
+
+## Building a release zip
+
+The repo ships a `scripts/pack.js` bundler used by the GitHub Actions
+release workflow. It zips the files Chrome needs into a self-contained
+`.zip` (manifest + content scripts + popup + lib + extractors + icons
++ README/LICENSE). The default file list includes
+`extractors/adapter-sudugu.js` for convenience; the bundler prints a
+warning and skips it if the file is missing — so it works for both the
+public framework and private builds that drop in additional adapters.
+
+To build locally:
+
+```bash
+node scripts/pack.js . novel-tts-reader-v0.7.0.zip
+```
+
+To cut a release: tag `v*` and push. The workflow bundles, uploads as
+an artifact, and creates a GitHub Release with auto-generated notes.
+
+```bash
+git tag v0.7.0
+git push origin v0.7.0
+```
 
 ## License
 
