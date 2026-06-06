@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+*.zip
+!novel-tts-reader-v0.7.zip
+pack.js
+test-*.mjs
+tmp/
+out/

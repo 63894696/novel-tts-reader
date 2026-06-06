@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>Novel TTS Reader</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      width: 480px; min-width: 400px; height: 600px; max-height: 700px;
+      margin: 0; padding: 0;
+      font: 13px/1.5 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #fafafa; color: #222;
+      display: flex; flex-direction: column;
+    }
+    .tabs {
+      display: flex; background: #fff; border-bottom: 1px solid #e5e5e5;
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1; padding: 10px 12px; text-align: center; cursor: pointer;
+      font-size: 13px; color: #666; border-bottom: 2px solid transparent;
+      transition: all .15s; user-select: none;
+    }
+    .tab:hover { background: #f5f5f5; }
+    .tab.active { color: #1f6feb; border-bottom-color: #1f6feb; font-weight: 600; }
+    .tab-badge {
+      display: inline-block; margin-left: 4px; padding: 1px 6px;
+      background: #1f6feb; color: #fff; border-radius: 8px; font-size: 10px;
+      min-width: 16px; text-align: center;
+    }
+    .tab-badge.empty { display: none; }
+    .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+    .panel.active { display: flex; }
+    .panel-body { flex: 1; overflow: auto; padding: 12px; }
+    .panel-body.no-pad { padding: 0; }
+    .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+    button {
+      padding: 6px 10px; border: 1px solid #ddd; background: #fff;
+      border-radius: 6px; cursor: pointer; font: inherit;
+      transition: all .15s;
+    }
+    button:hover:not(:disabled) { background: #f0f7ff; border-color: #1f6feb; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    button.primary { background: #1f6feb; color: #fff; border-color: #1f6feb; }
+    button.primary:hover:not(:disabled) { background: #1856bd; }
+    select, input[type=range] { font: inherit; padding: 3px 6px; }
+    .ta-wrap {
+      position: relative;
+      border: 1px solid #ddd; border-radius: 8px; background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .ta-wrap.dragover { border-color: #1f6feb; box-shadow: 0 0 0 3px rgba(31,111,235,.15); }
+    .ta-wrap.dragover::after {
+      content: '松开以加载文件'; position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(31,111,235,.08); color: #1f6feb; font-weight: 600;
+      border-radius: 8px; pointer-events: none;
+    }
+    textarea {
+      width: 100%; min-height: 140px; max-height: 260px;
+      border: none; outline: none; resize: vertical;
+      padding: 10px 12px; font: 13px/1.7 ui-monospace, "Cascadia Code", "Microsoft YaHei", monospace;
+      background: transparent;
+    }
+    .meta { font-size: 11px; color: #666; margin-top: 4px; }
+    .progress-bar { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; margin: 6px 0; }
+    .progress-bar > div { height: 100%; background: linear-gradient(90deg, #1f6feb, #06b6d4); width: 0; transition: width .3s; }
+    .current-sentence {
+      padding: 8px 10px; background: #fff8e1; border-left: 3px solid #f59e0b;
+      border-radius: 4px; font-size: 12px; line-height: 1.5;
+      margin: 6px 0; min-height: 32px;
+    }
+    .current-sentence.empty { background: #f5f5f5; border-left-color: #ddd; color: #999; }
+    .badge { display: inline-block; padding: 2px 6px; background: #e3f2fd; color: #1f6feb; border-radius: 4px; font-size: 10px; }
+    .file-input { display: none; }
+    kbd { background: #f5f5f5; border: 1px solid #ddd; border-radius: 3px; padding: 1px 5px; font-family: inherit; font-size: 11px; }
+    .hint { background: #fff8e1; padding: 6px 10px; border-radius: 4px; font-size: 11px; color: #8d6e00; margin: 6px 0; }
+    .shortcuts { font-size: 10px; color: #999; margin-top: 6px; }
+    .chapter-jump { display: flex; gap: 4px; align-items: center; font-size: 11px; color: #666; margin: 4px 0; }
+    .chapter-jump select { font-size: 11px; padding: 2px 4px; max-width: 240px; }
+
+    /* 抓取 tab 样式 */
+    .grab-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100%; color: #999; text-align: center; padding: 40px 20px;
+    }
+    .grab-empty .icon { font-size: 48px; margin-bottom: 12px; }
+    .grab-status {
+      padding: 12px; background: #fff; border-bottom: 1px solid #eee;
+    }
+    .grab-status h3 { margin: 0 0 6px; font-size: 15px; }
+    .grab-status .meta { font-size: 11px; }
+    .grab-log {
+      flex: 1; overflow: auto; padding: 8px 12px; background: #fafafa;
+      font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.6;
+    }
+    .grab-log .line { padding: 2px 0; border-bottom: 1px dashed #f0f0f0; }
+    .grab-log .line.info { color: #374151; }
+    .grab-log .line.success { color: #15803d; }
+    .grab-log .line.warn { color: #b45309; }
+    .grab-log .line.error { color: #dc2626; }
+    .grab-actions {
+      padding: 10px 12px; background: #fff; border-top: 1px solid #eee;
+      display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    }
+    .grab-actions .badge { padding: 4px 10px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="tabs">
+    <div class="tab active" data-tab="tts">🎧 听书</div>
+    <div class="tab" data-tab="grab">
+      📡 抓取任务<span class="tab-badge empty" id="tab-badge">0</span>
+    </div>
+  </div>
+
+  <!-- ============== 听书 tab ============== -->
+  <div class="panel active" id="panel-tts">
+    <div class="panel-body">
+      <div class="row">
+        <label>🎙</label>
+        <select id="voice" style="flex:1;min-width:160px"></select>
+        <button id="btn-refresh-voices" title="刷新声音列表">🔄</button>
+      </div>
+      <div class="row">
+        <label>语速</label>
+        <input type="range" id="rate" min="0.5" max="2.5" step="0.1" value="1" style="flex:1;max-width:120px">
+        <span id="rate-val" style="font-size:11px;color:#666;width:36px">1.0x</span>
+        <label style="margin-left:8px">音调</label>
+        <input type="range" id="pitch" min="0" max="2" step="0.1" value="1" style="flex:1;max-width:90px">
+        <span id="pitch-val" style="font-size:11px;color:#666;width:32px">1.0</span>
+      </div>
+      <div class="ta-wrap" id="ta-wrap">
+        <textarea id="text" placeholder="把要听的内容粘贴到这里…&#10;或者把 .txt 文件拖进来…"></textarea>
+      </div>
+      <div class="meta">
+        <span id="char-count">0</span> 字符 ·
+        <span id="sent-count">0</span> 句 ·
+        <span id="chap-count" style="color:#1f6feb"></span>
+        <span style="float:right">
+          <button id="btn-file" style="padding:2px 8px;font-size:11px">📂 打开 .txt</button>
+          <button id="btn-clear" style="padding:2px 8px;font-size:11px">🗑 清空</button>
+        </span>
+      </div>
+      <input type="file" id="file-input" class="file-input" accept=".txt,text/plain">
+      <div class="chapter-jump" id="chap-jump" style="display:none">
+        <span>章节:</span>
+        <select id="chap-select"></select>
+        <button id="btn-jump" style="padding:2px 8px;font-size:11px">跳转</button>
+      </div>
+      <div class="hint">💡 抓取的整本文件含 <code>========== 第 N 章 ==========</code> 分隔符,会自动识别章节</div>
+      <div class="row">
+        <button id="btn-play" class="primary">▶ 播放</button>
+        <button id="btn-pause">⏸</button>
+        <button id="btn-stop">⏹</button>
+        <button id="btn-prev">⏮</button>
+        <button id="btn-next">⏭</button>
+        <button id="btn-prev-chap" title="上一章">⏪</button>
+        <button id="btn-next-chap" title="下一章">⏩</button>
+        <span style="flex:1"></span>
+        <span class="badge" id="status-badge">空闲</span>
+      </div>
+      <div class="progress-bar"><div id="progress-fill"></div></div>
+      <div class="meta" id="progress-text">0/0 (0%)</div>
+      <div class="current-sentence empty" id="current">当前朗读内容会显示在这里</div>
+      <div class="shortcuts">
+        快捷键: <kbd>Space</kbd> 播/停 · <kbd>←</kbd> <kbd>→</kbd> 上下句 · <kbd>PgUp</kbd> <kbd>PgDn</kbd> 上下章 · <kbd>Esc</kbd> 停止
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== 抓取任务 tab ============== -->
+  <div class="panel" id="panel-grab">
+    <div id="grab-empty" class="grab-empty">
+      <div class="icon">📡</div>
+      <div>暂无抓取任务</div>
+      <div style="margin-top:8px;font-size:11px">在小说网页点右下角 📖 抓取 按钮</div>
+      <div style="margin-top:4px;font-size:11px">目录页点抓取 → 直接走"抓整本"</div>
+    </div>
+    <div id="grab-active" style="display:none;flex-direction:column;height:100%">
+      <div class="grab-status">
+        <h3 id="grab-title">—</h3>
+        <div class="meta">
+          <span class="badge" id="grab-status-badge">空闲</span>
+          <span id="grab-meta-text" style="margin-left:8px"></span>
+        </div>
+        <div class="progress-bar" style="margin-top:10px"><div id="grab-fill"></div></div>
+        <div class="meta" id="grab-progress-text" style="margin-top:4px">0/0 (0%)</div>
+        <div class="meta" id="grab-current-text" style="margin-top:2px;color:#444">等待任务</div>
+      </div>
+      <div class="grab-log" id="grab-log">
+        <div class="line info" style="color:#999;text-align:center;padding:20px">📋 实时日志</div>
+      </div>
+      <div class="grab-actions">
+        <button data-grab="pause"  style="padding:6px 10px;font-size:12px">⏸ 暂停</button>
+        <button data-grab="resume" style="padding:6px 10px;font-size:12px;display:none">▶ 继续</button>
+        <button data-grab="stop"   style="padding:6px 10px;font-size:12px">⏹ 停止</button>
+        <span style="flex:1"></span>
+        <button data-grab="dl"     style="padding:6px 12px;font-size:12px;background:#1f6feb;color:#fff;border-color:#1f6feb">💾 下载结果</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
