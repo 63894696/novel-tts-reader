@@ -3,6 +3,26 @@
 > A Chrome extension that turns any novel-style website into TTS-audio you can listen to.
 > Built around a **pluggable adapter architecture**: support for a new site is a single file.
 
+## ⚠️ Legal / responsible use
+
+This repository contains a **generic content-extraction framework**. It does
+**not** include adapters for any specific website and does **not** retrieve
+any content on its own. To use it, you must write or supply your own
+site-specific adapter (or use a separate, privately-shared build).
+
+**Users are solely responsible for ensuring that:**
+
+- They have legal authorization to retrieve any content via adapters they
+  add to this framework.
+- Their use of the extracted content complies with applicable copyright
+  law and the target site's terms of service.
+- They do not use this tool to facilitate copyright infringement,
+  unauthorized redistribution, or commercial scraping.
+
+The maintainers do not endorse or support use of this tool to download,
+re-host, or redistribute copyrighted material without permission. Please
+respect authors and support legitimate works.
+
 ## What this is
 
 This is the **framework core** of Novel TTS Reader. It does **not** contain any
@@ -64,6 +84,15 @@ then the dispatcher, then the main controller.
   "content.js"                 // 6. Main controller
 ]
 ```
+
+## Permissions
+
+The manifest declares `host_permissions: ["<all_urls>"]`. This is required
+because the framework is **site-agnostic** — without it, the content script
+cannot run on whatever website the end user's adapter targets. The framework
+itself does not include any site-specific adapter, so out of the box it
+behaves as a passive listener: it shows the floating 📖 button but cannot
+extract anything until an adapter is provided.
 
 ## Writing your first adapter
 

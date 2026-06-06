@@ -20,9 +20,10 @@ jobs:
 
       - name: Bundle zip (STORE mode, preserves directory structure)
         run: |
-          # We don't use `zip -r` because the framework already has node-based tooling.
-          # Use the same pack.js from the repo.
-          node pack.js . novel-tts-reader-${{ github.ref_name }}.zip
+          # Use the in-repo pack.js. It skips missing files with a warning,
+          # so it works for both the public framework (no site adapters) and
+          # private builds that drop in additional adapters.
+          node scripts/pack.js . novel-tts-reader-${{ github.ref_name }}.zip
 
       - name: Upload zip as workflow artifact
         uses: actions/upload-artifact@v4
