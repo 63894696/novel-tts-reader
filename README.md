@@ -49,9 +49,13 @@ respect authors and support legitimate works.
 > See [`docs/screenshots/`](docs/screenshots/) for the full set and instructions
 > on how to contribute your own.
 
-| Floating 📖 button on a chapter page | Per-chapter panel | Popup TTS listener |
+| Floating 📖 button on a chapter page | Per-chapter panel | Grab-task monitor |
 | :---: | :---: | :---: |
-| _Add `docs/screenshots/floating-button.png`_ | _Add `docs/screenshots/per-chapter-panel.png`_ | _Add `docs/screenshots/popup-tts.png`_ |
+| ![Floating button](docs/screenshots/01-floating-button.png) | ![Per-chapter panel](docs/screenshots/02-chapter-panel.png) | ![Task monitor](docs/screenshots/03-task-monitor.png) |
+
+The third column shows the **grab-task monitor** (right side of the page)
+that appears when a full-book grab is running — it shows live progress,
+chapter titles being fetched, and exposes pause / resume / export controls.
 
 ## What this is
 
