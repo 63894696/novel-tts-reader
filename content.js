@@ -54,8 +54,18 @@
       });
       console.log('[ntts-content] port 已连接');
     } catch (e) {
-      console.warn('[ntts-content] port 连接失败:', e);
-      setTimeout(connectPort, 1000);
+      // chrome.runtime.connect 同步抛错的情况(扩展已失效,sw 重启等)
+      // 区分 context invalidated(永无救,需刷新页面) vs 临时错误(可重连)
+      const msg = (e && e.message) || String(e);
+      if (/context invalidated/i.test(msg)) {
+        console.warn('[ntts-content] 扩展已失效,此页面需要刷新:', msg);
+        toast('⚠️ 扩展已更新或重载,请刷新此页面');
+        // 不重连,也不置 port = null(避免后续 sendRequest 走重试路径)
+      } else {
+        console.warn('[ntts-content] port 连接失败,1s 后重试:', msg);
+        port = null;
+        setTimeout(connectPort, 1000);
+      }
     }
     return port;
   }
