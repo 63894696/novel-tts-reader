@@ -1,16 +1,19 @@
 name: Release zip
 
-# Auto-build a publishable .zip whenever a tag like v1.2.3 is pushed.
-# The .zip is uploaded to the GitHub release by the standard `actions/upload-release-asset`
-# pattern, but we just attach it as a workflow artifact here — you can then
-# download it from the Actions tab and attach it to a manually-created release,
-# or use a third-party action like softprops/action-gh-release if you want
-# fully automatic releases.
+# On every `v*` tag push:
+#   1. Bundle the framework as a .zip (scripts/pack.js)
+#   2. Upload the .zip as a workflow artifact (for build inspection)
+#   3. Create a GitHub Release for the tag and attach the .zip
 
 on:
   push:
     tags:
       - "v*"
+
+# Creating Releases requires write access to the repo contents.
+# (The default GITHUB_TOKEN is read-only.)
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -37,3 +40,11 @@ jobs:
           name: novel-tts-reader-${{ github.ref_name }}
           path: novel-tts-reader-${{ github.ref_name }}.zip
           if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Title defaults to the tag name (e.g. v0.7.0).
+          # Auto-generate release notes from merged PRs + commits since last tag.
+          generate_release_notes: true
+          files: novel-tts-reader-${{ github.ref_name }}.zip
