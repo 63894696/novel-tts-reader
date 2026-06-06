@@ -15,6 +15,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Force all JavaScript actions in this workflow to use Node.js 24.
+      # actions/checkout@v4 still defaults to Node 20, which is deprecated
+      # and will be removed from GitHub-hosted runners on 2026-09-16.
+      # See: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
     steps:
       - uses: actions/checkout@v4
 
